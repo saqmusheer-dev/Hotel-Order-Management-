@@ -1,0 +1,6 @@
+{
+  "appId": "com.limradigitals.hotelordermanagement",
+  "appName": "Hotel Order Manager",
+  "webDir": "dist",
+  "bundledWebRuntime": false
+}
