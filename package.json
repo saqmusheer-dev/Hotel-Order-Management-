@@ -1,7 +1,7 @@
 {
   "name": "hotel-order-management",
   "private": true,
-  "version": "0.6.0",
+  "version": "0.7.0",
   "type": "module",
   "scripts": {
     "dev":"vite",
@@ -14,6 +14,7 @@
   "dependencies": {
     "@capacitor/android":"^7.4.3",
     "@capacitor/core":"^7.4.3",
+    "@capacitor-mlkit/barcode-scanning":"^7.5.0",
     "@vitejs/plugin-react":"latest",
     "vite":"latest",
     "react":"latest",
