@@ -22,6 +22,10 @@ jobs:
           java-version: '21'
       - name: Install dependencies
         run: npm install
+      - name: Add Manager connection panel
+        run: |
+          node scripts/add-connection-panel.mjs
+          node scripts/add-connection-styles.mjs
       - name: Build web app
         run: npm run build
       - name: Add Android platform
