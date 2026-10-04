@@ -30,6 +30,19 @@ jobs:
         run: node scripts/install-native-server.mjs
       - name: Sync Capacitor
         run: npx cap sync android
+      - name: Apply Hotel launcher icon
+        run: |
+          mkdir -p android/app/src/main/res/drawable
+          cat > android/app/src/main/res/drawable/ic_hotel.xml <<'EOF'
+          <vector xmlns:android="http://schemas.android.com/apk/res/android" android:width="108dp" android:height="108dp" android:viewportWidth="108" android:viewportHeight="108">
+            <path android:fillColor="#172033" android:pathData="M8,8 L100,8 L100,100 L8,100 Z"/>
+            <path android:fillColor="#FFFFFF" android:pathData="M25,91 L25,35 L54,20 L83,35 L83,91 Z"/>
+            <path android:fillColor="#172033" android:pathData="M46,91 L46,68 L62,68 L62,91 Z"/>
+            <path android:fillColor="#172033" android:pathData="M33,43 L43,43 L43,53 L33,53 Z M49,43 L59,43 L59,53 L49,53 Z M65,43 L75,43 L75,53 L65,53 Z"/>
+            <path android:fillColor="#172033" android:pathData="M29,57 L39,57 L39,65 L29,65 Z M45,57 L55,57 L55,65 L45,65 Z M61,57 L71,57 L71,65 L61,65 Z"/>
+          </vector>
+          EOF
+          sed -i 's#android:icon="@mipmap/ic_launcher"#android:icon="@drawable/ic_hotel"#' android/app/src/main/AndroidManifest.xml
       - name: Build debug APK
         working-directory: android
         run: ./gradlew assembleDebug
