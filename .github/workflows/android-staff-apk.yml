@@ -1,0 +1,56 @@
+name: Build Staff Android APK
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build-staff-apk:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - name: Install dependencies
+        run: npm install
+      - name: Configure Staff App
+        run: |
+          sed -i 's/com.limradigitals.hotelordermanagement/com.limradigitals.hotelordermanagement.staff/' capacitor.config.json
+          sed -i 's/Hotel Order Manager/Hotel Staff/' capacitor.config.json
+      - name: Build web app
+        run: npm run build
+      - name: Add Android platform
+        run: npx cap add android
+      - name: Install Mini Server native plugin
+        run: node scripts/install-native-server.mjs
+      - name: Sync Capacitor
+        run: npx cap sync android
+      - name: Apply Staff launcher icon
+        run: |
+          mkdir -p android/app/src/main/res/drawable
+          cat > android/app/src/main/res/drawable/ic_staff.xml <<'EOF'
+          <vector xmlns:android="http://schemas.android.com/apk/res/android" android:width="108dp" android:height="108dp" android:viewportWidth="108" android:viewportHeight="108">
+            <path android:fillColor="#123B5D" android:pathData="M8,8 L100,8 L100,100 L8,100 Z"/>
+            <path android:fillColor="#FFFFFF" android:pathData="M28,42 L54,25 L80,42 L80,78 L28,78 Z"/>
+            <path android:fillColor="#123B5D" android:pathData="M40,39 L54,31 L68,39 L68,48 L40,48 Z"/>
+            <path android:fillColor="#123B5D" android:pathData="M39,56 C39,50 44,47 54,47 C64,47 69,50 69,56 L69,68 L39,68 Z"/>
+            <path android:fillColor="#FFFFFF" android:pathData="M54,52 C58,52 61,55 61,59 C61,63 58,66 54,66 C50,66 47,63 47,59 C47,55 50,52 54,52 Z"/>
+          </vector>
+          EOF
+          sed -i 's#android:icon="@mipmap/ic_launcher"#android:icon="@drawable/ic_staff"#' android/app/src/main/AndroidManifest.xml
+          sed -i 's#android:label="@string/app_name"#android:label="Hotel Staff"#' android/app/src/main/AndroidManifest.xml
+      - name: Build debug APK
+        working-directory: android
+        run: ./gradlew assembleDebug
+      - name: Upload Staff APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: hotel-staff-debug-apk
+          path: android/app/build/outputs/apk/debug/app-debug.apk
