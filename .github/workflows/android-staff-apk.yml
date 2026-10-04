@@ -26,10 +26,13 @@ jobs:
         run: |
           sed -i 's/com.limradigitals.hotelordermanagement/com.limradigitals.hotelordermanagement.staff/' capacitor.config.json
           sed -i 's/Hotel Order Manager/Hotel Staff/' capacitor.config.json
-      - name: Add QR Manager Settings and Staff Scanner
+      - name: Add QR Manager Settings and native Staff scanner
         run: |
           node scripts/add-qr-connect.mjs
           node scripts/add-qr-styles.mjs
+          node scripts/add-ui-improvements.mjs
+          node scripts/add-ui-improvement-styles.mjs
+          node scripts/configure-staff-ui.mjs
       - name: Build web app
         run: npm run build
       - name: Add Android platform
