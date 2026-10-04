@@ -12,14 +12,17 @@ import org.json.JSONObject;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
+import java.net.Inet4Address;
 import java.net.InetAddress;
 import java.net.NetworkInterface;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.nio.charset.StandardCharsets;
 import java.security.SecureRandom;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Enumeration;
+import java.util.List;
 
 @CapacitorPlugin(name="MiniServer")
 public class MiniServerPlugin extends Plugin {
@@ -56,7 +59,50 @@ public class MiniServerPlugin extends Plugin {
       }catch(Exception ignored){}
     }
     static void reply(Socket c,int code,String body)throws Exception{byte[] b=body.getBytes(StandardCharsets.UTF_8);String status=code==200?"OK":code==401?"Unauthorized":code==404?"Not Found":"Error";String h="HTTP/1.1 "+code+" "+status+"\r\nContent-Type: application/json; charset=utf-8\r\nAccess-Control-Allow-Origin: *\r\nAccess-Control-Allow-Headers: Content-Type, X-Hotel-Key\r\nAccess-Control-Allow-Methods: GET, POST, OPTIONS\r\nContent-Length: "+b.length+"\r\nConnection: close\r\n\r\n";OutputStream o=c.getOutputStream();o.write(h.getBytes(StandardCharsets.UTF_8));o.write(b);o.flush();}
-    static String getIp(Context c){try{WifiManager w=(WifiManager)c.getSystemService(Context.WIFI_SERVICE);if(w!=null&&w.getConnectionInfo()!=null){int ip=w.getConnectionInfo().getIpAddress();if(ip!=0)return Formatter.formatIpAddress(ip);}}catch(Exception ignored){}try{Enumeration<NetworkInterface> es=NetworkInterface.getNetworkInterfaces();for(NetworkInterface ni:Collections.list(es))for(InetAddress a:Collections.list(ni.getInetAddresses()))if(!a.isLoopbackAddress()&&a.getHostAddress().indexOf(':')<0)return a.getHostAddress();}catch(Exception ignored){}return "127.0.0.1";}
+
+    static String getIp(Context c){
+      // Prefer the address reachable by another phone on the same LAN/hotspot.
+      // On Android hotspot mode WifiManager.getConnectionInfo() may be empty or
+      // may expose the client's address instead of the hotspot interface, so
+      // enumerate IPv4 interfaces and rank common private LAN/hotspot ranges.
+      try{
+        List<String> candidates=new ArrayList<>();
+        Enumeration<NetworkInterface> es=NetworkInterface.getNetworkInterfaces();
+        if(es!=null) for(NetworkInterface ni:Collections.list(es)){
+          String name=ni.getName()==null?"":ni.getName().toLowerCase(java.util.Locale.US);
+          if(!ni.isUp()||ni.isLoopback())continue;
+          for(InetAddress a:Collections.list(ni.getInetAddresses())){
+            if(!(a instanceof Inet4Address)||a.isLoopbackAddress()||a.isLinkLocalAddress())continue;
+            String ip=a.getHostAddress();
+            if(isPrivateIpv4(ip)) candidates.add(ip);
+          }
+        }
+        String ranked=pickLanAddress(candidates);
+        if(ranked!=null)return ranked;
+      }catch(Exception ignored){}
+      try{
+        WifiManager w=(WifiManager)c.getSystemService(Context.WIFI_SERVICE);
+        if(w!=null&&w.getConnectionInfo()!=null){int ip=w.getConnectionInfo().getIpAddress();if(ip!=0)return Formatter.formatIpAddress(ip);}
+      }catch(Exception ignored){}
+      return "127.0.0.1";
+    }
+    static boolean isPrivateIpv4(String ip){
+      try{
+        String[] p=ip.split("\\."); if(p.length!=4)return false;
+        int a=Integer.parseInt(p[0]),b=Integer.parseInt(p[1]);
+        return a==10 || (a==172&&b>=16&&b<=31) || (a==192&&b==168);
+      }catch(Exception e){return false;}
+    }
+    static String pickLanAddress(List<String> ips){
+      if(ips.isEmpty())return null;
+      // Hotspot/private LAN ranges first. Avoid returning a cellular VPN/tunnel
+      // address when a normal 192.168.x.x address is available.
+      String[] prefixes={"192.168.43.","192.168.49.","192.168.137.","192.168.0.","192.168.1."};
+      for(String prefix:prefixes)for(String ip:ips)if(ip.startsWith(prefix))return ip;
+      for(String ip:ips)if(ip.startsWith("10."))return ip;
+      for(String ip:ips)if(ip.startsWith("172."))return ip;
+      return ips.get(0);
+    }
   }
 
   static class DB extends android.database.sqlite.SQLiteOpenHelper{
