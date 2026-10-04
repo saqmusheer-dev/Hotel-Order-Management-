@@ -7,9 +7,17 @@ export function getConnection() {
 }
 export function setConnection(value) { localStorage.setItem('koms_connection', JSON.stringify(value)); }
 
+// The Manager talks to its own embedded server through localhost. Staff devices
+// use the LAN address returned by the native server (lanUrl).
 export async function startMiniServer(existingKey='') {
   const info = await MiniServer.start({ key: existingKey || '' });
-  const connection = { url: info.url, key: info.key, ip: info.ip, port: info.port };
+  const connection = {
+    url: `http://127.0.0.1:${info.port || 8787}`,
+    lanUrl: info.url,
+    key: info.key,
+    ip: info.ip,
+    port: info.port || 8787
+  };
   setConnection(connection);
   return connection;
 }
