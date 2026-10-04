@@ -1,0 +1,12 @@
+import fs from 'node:fs';
+const p='src/App.jsx';
+let s=fs.readFileSync(p,'utf8');
+if(s.includes('className="connection-card"')) process.exit(0);
+const marker="return <div className=\"app\"><header>";
+const replacement=`return <div className="app"><header>`;
+s=s.replace(marker,replacement);
+const navMarker='</header><nav>';
+const panel=`</header>{user.role==='manager'&&<section className="connection-card"><div><b>🏨 Hotel Network</b><span>Share these details with Staff / Delivery devices</span></div><div className="connection-values"><label>Manager IP / Server URL<input readOnly value={serverInfo?.url||'Starting mini-server…'} onFocus={e=>e.target.select()}/></label><label>Hotel Connection Key<input readOnly value={serverInfo?.key||'Generating…'} onFocus={e=>e.target.select()}/></label><label>Port<input readOnly value={serverInfo?.port||8787}/></label></div><div className="connection-help">Connect both phones to the same Wi-Fi or Manager hotspot. Enter the Server URL and Hotel Key in the Staff app.</div></section><nav>`;
+s=s.replace(navMarker,panel);
+fs.writeFileSync(p,s);
+console.log('Connection panel injected');
