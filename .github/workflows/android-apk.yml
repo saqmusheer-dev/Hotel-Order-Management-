@@ -30,10 +30,14 @@ jobs:
         run: |
           node scripts/add-orders-view.mjs
           node scripts/add-orders-styles.mjs
-      - name: Add QR Manager Settings
+      - name: Add QR Manager Settings and native scanner
         run: |
           node scripts/add-qr-connect.mjs
           node scripts/add-qr-styles.mjs
+      - name: Add final UI improvements
+        run: |
+          node scripts/add-ui-improvements.mjs
+          node scripts/add-ui-improvement-styles.mjs
       - name: Build web app
         run: npm run build
       - name: Add Android platform
